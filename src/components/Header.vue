@@ -4,7 +4,7 @@
       color="primary"
       dark
     >
-        <v-toolbar-title>vue-app</v-toolbar-title>
+    <v-toolbar-title>vue-app</v-toolbar-title>
   </v-app-bar>
 </template>
 
