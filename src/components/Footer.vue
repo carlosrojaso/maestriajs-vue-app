@@ -17,7 +17,12 @@
 
 <script>
 export default {
-    name: 'Footer'
+    name: 'Footer',
+    methods: {
+      newNote() {
+        this.$root.$emit('NEW_NOTE',true);
+      }
+    }
 }
 </script>
 
