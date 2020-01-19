@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import uuidv4 from 'uuid/v4';
 import {notesDataApi} from "../data/notes-data-api";
 
 export default {
@@ -89,7 +90,7 @@ export default {
     saveNote() {
       if (!this.isEditing) { 
         const noteToSave = {
-          id: this.notes.length + 1,
+          id: uuidv4(),
           name: this.newTitle,
           description: this.newContent
           };
@@ -99,7 +100,6 @@ export default {
         .then(
           () => {
             this.notes.push(noteToSave);
-            this.closeModal();
           }
         );
       } else {
@@ -114,12 +114,11 @@ export default {
           .then(
             () => {
               this.notes[originalNote] = noteToEdit;
-              this.closeModal();
             }
           );
       }
 
-      this.reset();
+      this.closeModal();
     },
     getNote(note) {
       this.idToEdit = note.id;

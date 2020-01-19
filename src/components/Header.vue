@@ -4,7 +4,20 @@
       color="primary"
       dark
     >
-    <v-toolbar-title>vue-app</v-toolbar-title>
+    <v-toolbar-title>Vue App</v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-toolbar-items>
+      <v-btn
+      to="/home"
+      color="primary"
+      >Home</v-btn>
+    </v-toolbar-items>
+    <v-toolbar-items>
+      <v-btn
+      to="/about"
+      color="primary"
+      >About</v-btn>
+    </v-toolbar-items>
   </v-app-bar>
 </template>
 
@@ -15,5 +28,4 @@ export default {
 </script>
 
 <style>
-
 </style>
