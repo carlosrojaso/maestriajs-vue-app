@@ -1,0 +1,15 @@
+{
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-maestriajs-vue-app-dev-130639-authRole",
+            "UnauthRoleArn": "arn:aws:iam::446791701653:role/amplify-maestriajs-vue-app-dev-130639-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::446791701653:role/amplify-maestriajs-vue-app-dev-130639-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "amplify-maestriajs-vue-app-dev-130639-deployment",
+            "UnauthRoleName": "amplify-maestriajs-vue-app-dev-130639-unauthRole",
+            "StackName": "amplify-maestriajs-vue-app-dev-130639",
+            "StackId": "arn:aws:cloudformation:us-east-1:446791701653:stack/amplify-maestriajs-vue-app-dev-130639/3d01dc20-5b1e-11ea-9afa-0af77bd56d08",
+            "AmplifyAppId": "d2zto7wrqwylny"
+        }
+    }
+}
