@@ -46,11 +46,16 @@
 
 <script>
 import uuidv4 from 'uuid/v4';
-import {notesDataApi} from "../data/notes-data-api";
+
+import { components } from 'aws-amplify-vue'
+import { DataStore } from "@aws-amplify/datastore";
+import { Todo } from '../models';
 
 export default {
   name: 'Home',
-  mixins: [notesDataApi],
+  components: {
+    ...components
+  },
   data: () => ({  
     notes: [],
     dialog: false,
@@ -68,54 +73,56 @@ export default {
         v => v.length >= 4 || 'Description must be at least 4 characters',
       ],
   }),
-  mounted() {
+  async mounted() {
     this.$root.$on('NEW_NOTE', (action) => {if (action) { this.newNote(); }});
-    this.getTasks(1)
-      .then((res) => res.json())
-      .then((items) => {
-        this.notes = items.map((item) => ({id: item.id, name: item.title, description: item.body}));
-        });
+
+    this.notes = await this.getTasks();
   },
   methods: {
-    deleteNote(id) {
-      const noteToDelete = this.notes.findIndex((item) => (item.id === id));
-      this.deleteTask(id)
-        .then(res => res.json())
-        .then(
-          () => {
-            this.notes.splice(noteToDelete, 1);
-          }
-        );
+    async deleteNote(id) {
+      const todelete = await DataStore.query(Todo, id);
+
+      DataStore.delete(todelete).then(
+        () => {
+          const taskToDelete = this.notes.findIndex((item) => (item.id === id));
+          this.notes.splice(taskToDelete, 1);
+        }
+      );
     },
-    saveNote() {
+    async saveNote() {
       if (!this.isEditing) { 
         const noteToSave = {
           id: uuidv4(),
           name: this.newTitle,
           description: this.newContent
           };
-
-      this.createTask(noteToSave)
-        .then(res => res.json())
-        .then(
+      
+        await DataStore.save(new Todo(
+          noteToSave
+        )).then(
           () => {
             this.notes.push(noteToSave);
           }
         );
       } else {
-        const originalNote = this.notes.findIndex((item) => (item.id === this.idToEdit));
-        const noteToEdit = {
-          id: this.idToEdit,
-          name: this.newTitle,
-          description: this.newContent
-          };
-        this.putTask(noteToEdit)
-          .then(res => res.json())
-          .then(
-            () => {
-              this.notes[originalNote] = noteToEdit;
-            }
-          );
+        const original = await DataStore.query(Todo, this.idToEdit);
+
+        await DataStore.save(
+          Todo.copyOf(original, updated => {
+            updated.name = this.newTitle;
+            updated.description = this.newContent;
+          })
+        ).then(
+          () => {
+            const originalNote = this.notes.findIndex((item) => (item.id === this.idToEdit));
+            const noteToEdit = {
+              id: this.idToEdit,
+              name: this.newTitle,
+              description: this.newContent
+              };
+            this.notes[originalNote] = noteToEdit;
+          }
+        );
       }
 
       this.closeModal();
@@ -126,6 +133,10 @@ export default {
       this.newContent = note.description;
       this.isEditing = true;
       this.dialog = true;
+    },
+    async getTasks() {
+      const todos = await DataStore.query(Todo);
+      return todos.map((elem) => ({...elem}));
     },
     newNote () {
       this.dialog = true;
