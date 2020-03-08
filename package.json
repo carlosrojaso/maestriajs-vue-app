@@ -10,8 +10,10 @@
   "dependencies": {
     "aws-appsync": "^3.0.2",
     "core-js": "^3.4.3",
+    "graphql-tag": "^2.10.3",
     "uuid": "^3.4.0",
     "vue": "^2.6.10",
+    "vue-apollo": "^3.0.3",
     "vue-router": "^3.1.5",
     "vuetify": "^2.1.0"
   },

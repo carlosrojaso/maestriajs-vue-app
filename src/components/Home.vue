@@ -10,7 +10,7 @@
           <v-icon color="grey lighten-1">mdi-pencil</v-icon>
         </v-btn>
         <v-btn icon>
-          <v-icon @click="deleteNote(note.id)" color="grey lighten-1">mdi-delete</v-icon>
+          <v-icon @click="deleteNote(note)" color="grey lighten-1">mdi-delete</v-icon>
         </v-btn>
       </v-list-item-action>
     </v-list-item>
@@ -46,7 +46,10 @@
 
 <script>
 import uuidv4 from 'uuid/v4';
+import gql from 'graphql-tag'
 import {notesDataApi} from "../data/notes-data-api";
+import {listTodos} from '../graphql/queries';
+import {createTodo, updateTodo, deleteTodo} from '../graphql/mutations';
 
 export default {
   name: 'Home',
@@ -70,22 +73,41 @@ export default {
   }),
   mounted() {
     this.$root.$on('NEW_NOTE', (action) => {if (action) { this.newNote(); }});
-    this.getTasks(1)
-      .then((res) => res.json())
-      .then((items) => {
-        this.notes = items.map((item) => ({id: item.id, name: item.title, description: item.body}));
-        });
+  },
+  apollo: {
+    notes: {
+      query: () => gql(listTodos),
+      // eslint-disable-next-line no-console
+      update: data => (data.listTodos.items.filter(task => task._deleted !== true))
+    }
   },
   methods: {
-    deleteNote(id) {
-      const noteToDelete = this.notes.findIndex((item) => (item.id === id));
-      this.deleteTask(id)
-        .then(res => res.json())
-        .then(
-          () => {
-            this.notes.splice(noteToDelete, 1);
+    deleteNote(task) {
+      this.$apollo.mutate({
+        mutation: gql(deleteTodo),
+        variables: {
+          input: {
+            id: task.id,
+            _version: task._version
           }
-        );
+        },
+        update: (store, { data: { deleteTodo } }) => {
+          const data = store.readQuery({ query: gql(listTodos) })
+          data.listTodos.items = data.listTodos.items.filter(task => task.id !== deleteTodo.id)
+          store.writeQuery({ query: gql(listTodos), data })
+        },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          deleteTodo: {
+            __typename: 'Todo',
+            ...task
+          }
+        },
+      })
+      // eslint-disable-next-line no-console
+      .then(data => console.log(data))
+      // eslint-disable-next-line no-console
+      .catch(error => console.error(error))
     },
     saveNote() {
       if (!this.isEditing) { 
@@ -95,27 +117,64 @@ export default {
           description: this.newContent
           };
 
-      this.createTask(noteToSave)
-        .then(res => res.json())
-        .then(
-          () => {
-            this.notes.push(noteToSave);
+      this.$apollo.mutate({
+        mutation: gql(createTodo),
+        variables: {
+          input: noteToSave
+          },
+        update: (store, { data: { createTodo } }) => {
+          const data = store.readQuery({ query: gql(listTodos) });
+
+          data.listTodos.items = [
+                ...data.listTodos.items.filter(item => item.id !== createTodo.id),
+                createTodo
+              ];
+
+          store.writeQuery({ query: gql(listTodos), data })
+        },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          createTodo: {
+            __typename: 'Todo',
+              ...noteToSave
           }
-        );
+        },
+      })
+      // eslint-disable-next-line no-console
+      .then(data => console.log(data))
+      // eslint-disable-next-line no-console
+      .catch(error => console.error("error!!!: ", error))
       } else {
-        const originalNote = this.notes.findIndex((item) => (item.id === this.idToEdit));
+
         const noteToEdit = {
           id: this.idToEdit,
           name: this.newTitle,
           description: this.newContent
           };
-        this.putTask(noteToEdit)
-          .then(res => res.json())
-          .then(
-            () => {
-              this.notes[originalNote] = noteToEdit;
-            }
-          );
+
+        this.$apollo.mutate({
+        mutation: gql(updateTodo),
+        variables: {
+          input: noteToEdit
+        },
+        update: (store, { data: { updateTodo } }) => {
+          const data = store.readQuery({ query: gql(listTodos) })
+          const index = data.listTodos.items.findIndex(item => item.id === updateTodo.id)
+          data.listTodos.items[index] = updateTodo
+          store.writeQuery({ query: gql(listTodos), data })
+        },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          updateTodo: {
+            __typename: 'Todo',
+            ...noteToEdit
+          }
+        },
+      })
+      // eslint-disable-next-line no-console
+      .then(data => console.log(data))
+      // eslint-disable-next-line no-console
+      .catch(error => console.error(error))
       }
 
       this.closeModal();
